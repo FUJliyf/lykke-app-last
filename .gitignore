@@ -1,0 +1,24 @@
+# Node
+node_modules/
+
+# Signing —— 证书与密码严禁提交
+android/app/lykke.keystore
+android/app/keystore.properties
+*.keystore
+*.jks
+keystore.properties
+
+# Build outputs
+android/app/build/
+android/build/
+android/.gradle/
+android/captures/
+*.apk
+*.aab
+
+# Misc
+.DS_Store
+*.log
+
+# 签名信息（含密码，严禁提交）
+*签名信息*.txt

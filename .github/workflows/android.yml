@@ -1,0 +1,71 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Decode keystore
+        env:
+          LYKKE_KEYSTORE: ${{ secrets.LYKKE_KEYSTORE }}
+        run: |
+          echo "$LYKKE_KEYSTORE" | base64 -d > android/app/lykke.keystore
+
+      - name: Create keystore.properties
+        env:
+          LYKKE_KEYSTORE_PASSWORD: ${{ secrets.LYKKE_KEYSTORE_PASSWORD }}
+          LYKKE_KEY_ALIAS: ${{ secrets.LYKKE_KEY_ALIAS }}
+          LYKKE_KEY_PASSWORD: ${{ secrets.LYKKE_KEY_PASSWORD }}
+        run: |
+          printf 'storeFile=lykke.keystore\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$LYKKE_KEYSTORE_PASSWORD" "$LYKKE_KEY_ALIAS" "$LYKKE_KEY_PASSWORD" > android/app/keystore.properties
+
+      - name: Build release APK
+        run: |
+          chmod +x android/gradlew
+          cd android
+          ./gradlew assembleRelease
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: lykke-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Prepare versioned APK
+        id: ver
+        run: |
+          VN=$(grep -E "versionName" android/app/build.gradle | head -1 | sed -E 's/.*versionName "([^"]+)".*/\1/')
+          echo "version=$VN" >> "$GITHUB_OUTPUT"
+          cp android/app/build/outputs/apk/release/app-release.apk "lykke-v$VN.apk"
+
+      - name: Publish to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          name: lykke v${{ steps.ver.outputs.version }}
+          files: lykke-v${{ steps.ver.outputs.version }}.apk
+          generate_release_notes: true

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>lykke</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: linear-gradient(160deg, #ffe3ef 0%, #ffd1e3 50%, #f7c6e8 100%);
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #d6336c;
+      text-align: center;
+    }
+    .heart {
+      font-size: 46px;
+      animation: beat 1.2s ease-in-out infinite;
+    }
+    .name {
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      margin: 14px 0 8px;
+    }
+    .tip {
+      font-size: 14px;
+      color: #e0669a;
+      line-height: 1.7;
+      padding: 0 28px;
+    }
+    @keyframes beat {
+      0%, 100% { transform: scale(1); }
+      25% { transform: scale(1.15); }
+      40% { transform: scale(1.05); }
+    }
+  </style>
+</head>
+<body>
+  <div class="heart">&#10084;</div>
+  <div class="name">lykke</div>
+  <div class="tip">
+    正在打开我们的小世界…<br />
+    如果一直没有显示，请检查网络后重新打开。
+  </div>
+</body>
+</html>
