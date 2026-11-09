@@ -10,6 +10,7 @@ public class MainActivity extends BridgeActivity {
 
     private boolean updateChecked = false;
     private boolean listenerRegistered = false;
+    private UpdateManager updateManager;
 
     // 干净正式版脚本：隐藏平台水印 + 抑制系统自动填充 + 聚焦时值保护；不含诊断、不动态切换
     private static final String INJECT_JS = """
@@ -125,8 +126,10 @@ public class MainActivity extends BridgeActivity {
         // 保证 WebView 可聚焦，不拦截触摸、不抢焦点
         wv.setFocusable(true);
         wv.setFocusableInTouchMode(true);
-        // 固定软件渲染层：这是此前确认输入稳定、不被自动填充清空的关键设置
-        wv.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        // 恢复 GPU 硬件加速渲染，提升滑动/动画/粒子帧率；自动填充清空问题由下方
+        // setImportantForAutofill 与注入脚本的值保护承担。
+        // 若真机复现输入框被自动填充清空，可回退为 View.LAYER_TYPE_SOFTWARE。
+        wv.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         // 禁用系统自动填充 / 密码保险箱（鸿蒙上密码框聚焦会触发并清空输入框）
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             wv.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
@@ -139,6 +142,9 @@ public class MainActivity extends BridgeActivity {
         WebView wv = this.getBridge() != null ? this.getBridge().getWebView() : null;
         if (wv != null) {
             setupFocus();
+            if (updateManager == null) updateManager = new UpdateManager(this);
+            // 从「安装未知来源」设置页返回后，若已授权则继续安装待处理的包
+            updateManager.onReturnFromSettings();
             // 页面每次加载完成都重新注入，保证水印隐藏与值保护生效
             if (!listenerRegistered && getBridge() != null) {
                 listenerRegistered = true;
@@ -156,7 +162,7 @@ public class MainActivity extends BridgeActivity {
             wv.postDelayed(this::inject, 7000);
             if (!updateChecked) {
                 updateChecked = true;
-                wv.postDelayed(() -> new UpdateManager(this).check(), 5000);
+                wv.postDelayed(() -> updateManager.check(), 5000);
             }
         }
     }

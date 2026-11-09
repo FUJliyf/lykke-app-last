@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import androidx.core.content.FileProvider;
 
 import org.json.JSONArray;
@@ -33,6 +34,8 @@ public class UpdateManager {
     private final Context ctx;
     private final Handler main = new Handler(Looper.getMainLooper());
     private AlertDialog progress;
+    /** 已下载、等待安装授权的包；授权返回后由 onReturnFromSettings 续装。 */
+    private File pendingApk;
 
     public UpdateManager(Context ctx) {
         this.ctx = ctx;
@@ -118,7 +121,7 @@ public class UpdateManager {
 
                 main.post(() -> {
                     dismissProgress();
-                    install(out);
+                    beginInstall(out);
                 });
             } catch (Exception e) {
                 main.post(() -> {
@@ -129,6 +132,64 @@ public class UpdateManager {
                 if (conn != null) conn.disconnect();
             }
         }).start();
+    }
+
+    /** 下载完成后先校验「安装未知来源」权限；未授权则引导去设置，返回后续装。 */
+    private void beginInstall(File apk) {
+        if (hasInstallPermission()) {
+            install(apk);
+        } else {
+            pendingApk = apk;
+            promptNeedPermission();
+        }
+    }
+
+    private boolean hasInstallPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return ctx.getPackageManager().canRequestPackageInstalls();
+        }
+        // 8.0 以下走全局「未知来源」开关，由系统安装器兜底
+        return true;
+    }
+
+    private void promptNeedPermission() {
+        new AlertDialog.Builder(ctx)
+                .setTitle("需要安装权限")
+                .setMessage("更新需要允许安装来自本应用的安装包，请在下一步打开开关后返回。")
+                .setPositiveButton("去设置", (d, w) -> openUnknownSourceSettings())
+                .setNegativeButton("稍后", (d, w) -> pendingApk = null)
+                .show();
+    }
+
+    private void openUnknownSourceSettings() {
+        try {
+            Intent i;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                i = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        Uri.fromParts("package", ctx.getPackageName(), null));
+            } else {
+                i = new Intent(Settings.ACTION_SECURITY_SETTINGS);
+            }
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            ctx.startActivity(i);
+        } catch (Exception e) {
+            // 个别 ROM 无该设置页，退回直接安装由系统兜底
+            if (pendingApk != null) {
+                File apk = pendingApk;
+                pendingApk = null;
+                install(apk);
+            }
+        }
+    }
+
+    /** 从设置页返回后由 Activity 调用：已授权则继续安装待处理的包。 */
+    public void onReturnFromSettings() {
+        if (pendingApk == null) return;
+        if (hasInstallPermission()) {
+            File apk = pendingApk;
+            pendingApk = null;
+            install(apk);
+        }
     }
 
     private void install(File apk) {
