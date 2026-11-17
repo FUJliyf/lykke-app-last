@@ -6,6 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'www',
   server: {
     url: 'https://4mbp059y3vwmx.doubao.link/app/app_17gvdfy0dyn',
+    errorPath: 'offline.html',
     cleartext: false,
     androidScheme: 'https',
   },

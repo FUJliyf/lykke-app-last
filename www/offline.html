@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>lykke</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: linear-gradient(160deg, #ffe3ef 0%, #ffd1e3 50%, #f7c6e8 100%);
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #d6336c;
+      text-align: center;
+      padding: 0 28px;
+      box-sizing: border-box;
+    }
+    .heart {
+      font-size: 46px;
+      animation: beat 1.2s ease-in-out infinite;
+      margin-bottom: 18px;
+    }
+    .title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin: 0 0 10px;
+    }
+    .tip {
+      font-size: 14px;
+      color: #e0669a;
+      line-height: 1.8;
+      max-width: 280px;
+    }
+    .retry {
+      margin-top: 30px;
+      border: none;
+      border-radius: 999px;
+      padding: 14px 44px;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: #fff;
+      background: linear-gradient(135deg, #f06595 0%, #d6336c 100%);
+      box-shadow: 0 8px 20px rgba(214, 51, 108, 0.28);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .retry:active {
+      opacity: 0.85;
+    }
+    @keyframes beat {
+      0%, 100% { transform: scale(1); }
+      25% { transform: scale(1.15); }
+      40% { transform: scale(1.05); }
+    }
+  </style>
+</head>
+<body>
+  <div class="heart">&#10084;</div>
+  <div class="title">网络不太好</div>
+  <div class="tip">暂时连不上我们的小世界，请检查网络后再试。<br />内容和记录都还在，不用担心。</div>
+  <button class="retry" id="retry" type="button">重新加载</button>
+  <script>
+    // 兜底页为本地资源；点击后重新导航到远程应用地址。
+    var REMOTE_URL = "https://4mbp059y3vwmx.doubao.link/app/app_17gvdfy0dyn";
+    var btn = document.getElementById("retry");
+    function reload() {
+      try { location.replace(REMOTE_URL); } catch (e) { location.href = REMOTE_URL; }
+    }
+    if (btn) { btn.addEventListener("click", reload); }
+  </script>
+</body>
+</html>
