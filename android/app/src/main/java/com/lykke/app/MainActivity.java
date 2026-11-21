@@ -2,6 +2,7 @@ package com.lykke.app;
 
 import android.os.Build;
 import android.view.View;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.WebViewListener;
@@ -130,6 +131,11 @@ public class MainActivity extends BridgeActivity {
         // setImportantForAutofill 与注入脚本的值保护承担。
         // 若真机复现输入框被自动填充清空，可回退为 View.LAYER_TYPE_SOFTWARE。
         wv.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        // 禁用 WebView HTTP 缓存：每次冷启动拉取最新脚本，避免发版后残留旧缓存、
+        // 旧脚本与线上对不上导致各子页进入「加载失败」。
+        wv.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
+        // 保留 DOM 本地存储，维持登录态与本机数据不被清掉。
+        wv.getSettings().setDomStorageEnabled(true);
         // 禁用系统自动填充 / 密码保险箱（鸿蒙上密码框聚焦会触发并清空输入框）
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             wv.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
